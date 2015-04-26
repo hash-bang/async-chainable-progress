@@ -40,7 +40,7 @@ module.exports = function() {
 		}
 		// }}}
 		// Accept updated parameters {{{
-		['value', 'max'].forEach(function(option) {
+		['value', 'max', 'text'].forEach(function(option) {
 			if (item[option]) self._progressObjects[item.id][option] = item[option];
 		});
 		// }}}
@@ -98,7 +98,7 @@ module.exports = function() {
 				});
 				break;
 			default:
-				throw new Error('Unsupported call type for async-chainable-progress: ' + calledAs);
+				throw new Error('Unsupported call type for async-chainable-progress/progress: ' + calledAs);
 		}
 
 		return this;
@@ -135,7 +135,7 @@ module.exports = function() {
 				});
 				break;
 			default:
-				throw new Error('Unsupported call type for async-chainable-progress: ' + calledAs);
+				throw new Error('Unsupported call type for async-chainable-progress/spinner: ' + calledAs);
 		}
 
 		return this;
@@ -183,6 +183,41 @@ module.exports = function() {
 		}
 
 		return this;
+	};
+	// }}}
+
+	// .progressComplete {{{
+	this.progressComplete = function() {
+		var calledAs = this._getOverload(arguments);
+		switch(calledAs) {
+			case '':
+				this._struct.push({type: 'progressComplete'});
+				break;
+			case 'string': // Form: progressComplete(name)
+				this._struct.push({type: 'progressComplete', ids: [arguments[0]]});
+				break;
+			case 'array': // Form: progressComplete(names)
+				this._struct.push({type: 'progressComplete', ids: arguments[0]});
+				break;
+			default:
+				throw new Error('Unsupported call type for async-chainable-progress/progressComplete: ' + calledAs);
+		}
+
+		return this;
+	}
+
+	this._plugins['progressComplete'] = function(params) {
+		var removeIds = params.ids || false;
+
+		for (var id in this._progressObjects) {
+			if (!removeIds || !(removeIds.indexOf(id) > -1)) {
+				if (this._progressObjects[id].rendered++ > 0) terminal.up(1).eraseLineAfter(); // Remove from terminal also
+				delete this._progressObjects[id];
+			}
+		}
+
+		this._progressRender();
+		this._execute();
 	};
 	// }}}
 };
