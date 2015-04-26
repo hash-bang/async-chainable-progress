@@ -55,7 +55,7 @@ module.exports = function() {
 			switch (obj.type) {
 				case 'progressBar':
 					if (obj.rendered++ > 0) terminal.up(1).eraseLineAfter();
-					process.stdout.write(obj.objRef.update(obj.value, obj.max));
+					process.stdout.write(obj.objRef.update(obj.value, obj.max) + "\n");
 					break;
 				case 'spinner':
 					if (obj.rendered++ > 0) terminal.up(1).eraseLineAfter();
@@ -67,7 +67,7 @@ module.exports = function() {
 	};
 	// }}}
 
-	// .progress {{{
+	// .progress() {{{
 	this.progress = function() {
 		var calledAs = this._getOverload(arguments);
 		switch(calledAs) {
@@ -142,7 +142,7 @@ module.exports = function() {
 	};
 	// }}}
 
-	// .progressDefaults {{{
+	// .progressDefaults() {{{
 	this._progressDefaults = {
 		buffer: {
 			x: 0,
@@ -186,7 +186,7 @@ module.exports = function() {
 	};
 	// }}}
 
-	// .progressComplete {{{
+	// .progressComplete() {{{
 	this.progressComplete = function() {
 		var calledAs = this._getOverload(arguments);
 		switch(calledAs) {
@@ -220,4 +220,34 @@ module.exports = function() {
 		this._execute();
 	};
 	// }}}
+
+	// .setProgress() {{{
+	this.setProgress = function() {
+		var calledAs = this._getOverload(arguments);
+		var progressObj;
+		switch(calledAs) {
+			case '':
+				if (! (progressObj = _.find(this._progressObjects, {id: 'anonBar'})) ) return;
+				progressObj.value = 0;
+				break;
+			case 'number':
+				if (! (progressObj = _.find(this._progressObjects, {id: 'anonBar'})) ) return;
+				progressObj.value = arguments[0];
+				break;
+			case 'number,number':
+				if (! (progressObj = _.find(this._progressObjects, {id: 'anonBar'})) ) return;
+				progressObj.value = arguments[0];
+				progressObj.max = arguments[1];
+				break;
+			default:
+				throw new Error('Unsupported call type for async-chainable-progress/setProgress: ' + calledAs);
+		}
+		this._progressRender();
+
+		return this;
+	};
+	// }}}
+
+	// Make shortcut for setProgress inside context object
+	this._context.setProgress = this.setProgress.bind(this);
 };
