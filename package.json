@@ -1,6 +1,6 @@
 {
   "name": "async-chainable-progress",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Plugin for async-chainable that provides progress() support",
   "main": "index.js",
   "repository": {
