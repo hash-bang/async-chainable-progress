@@ -57,7 +57,7 @@ module.exports = function() {
 				case 'progressBar':
 					if (obj.rendered++ > 0) terminal.up(1).eraseLineAfter();
 					process.stdout.write(
-						(obj.text ? '\u001b[90m ' + obj.text + '\u001b[0m ' : '') +
+						(obj.text ? obj.text + ' ' : '') +
 						obj.objRef.update(obj.value, obj.max) +
 						"\n"
 					);
@@ -176,6 +176,30 @@ module.exports = function() {
 	};
 	// }}}
 
+	// .tick() {{{
+	this.tick = function() {
+		var calledAs = this._getOverload(arguments);
+		switch(calledAs) {
+			case 'string': // Form: tick(text)
+				this._struct.push({type: 'progressTick', text: arguments[0], status: 'ok'});
+				break;
+			default:
+				throw new Error('Unsupported call type for async-chainable-progress/spinner: ' + calledAs);
+		}
+
+		this._progressRender();
+
+		return this;
+	};
+
+	this._plugins['progressTick'] = function(params) {
+		console.log(this._progressDefaults.tick.ok, params.text);
+
+		this._progressRender();
+		this._execute();
+	};
+	// }}}
+
 	// .progressDefaults() {{{
 	this._progressDefaults = {
 		buffer: {
@@ -193,6 +217,11 @@ module.exports = function() {
 		spinner: {
 			text: 'Working...',
 			spinners: process.platform == 'win32' ? ['|','/','-','\\'] : ['◜','◠','◝','◞','◡','◟'],
+		},
+		tick: {
+			ok: '\u001b[32m' + '✓' + '\u001b[0m',
+			fail: '\u001b[31m' + '✖' + '\u001b[0m',
+			pending: '\u001b[36m' + '-' + '\u001b[0m',
 		},
 	};
 
