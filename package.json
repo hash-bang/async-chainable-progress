@@ -1,0 +1,29 @@
+{
+  "name": "async-chainable-progress",
+  "version": "1.0.0",
+  "description": "Plugin for async-chainable that provides progress() support",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hash-bang/async-chainable-progress"
+  },
+  "license": "MIT",
+  "keywords": [
+    "async",
+    "async-chainable",
+    "progress"
+  ],
+  "author": "Matt Carter <m@ttcarter.com>",
+  "bugs": {
+    "url": "https://github.com/hash-bang/async-chainable-progress/issues"
+  },
+  "homepage": "https://github.com/hash-bang/async-chainable-progress",
+  "devDependencies": {
+    "async-chainable": "^1.7.8"
+  },
+  "dependencies": {
+    "clui": "^0.3.1",
+    "lodash": "^3.7.0",
+    "terminal-kit": "^0.10.4"
+  }
+}
