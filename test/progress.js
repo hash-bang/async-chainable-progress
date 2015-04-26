@@ -1,5 +1,5 @@
 var async = require('async-chainable');
-var asyncProgress = require('./');
+var asyncProgress = require('../');
 
 async()
 	.use(asyncProgress)

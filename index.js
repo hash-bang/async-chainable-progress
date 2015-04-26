@@ -5,7 +5,7 @@ var terminal = require('terminal-kit').terminal();
 module.exports = function() {
 	this._progressObjects = {};
 
-	// .progress() {{{
+	// Main renderer {{{
 	this._plugins['progress'] = function(params) {
 		var self = this;
 		// Set Default options {{
@@ -22,9 +22,17 @@ module.exports = function() {
 					this._progressObjects[item.id] = _.defaults({
 						rendered: 0,
 						type: 'progressBar',
-						objRef: new clui.Progress(params.progress.width),
+						objRef: new clui.Progress(params.width || params.progress.width),
 						max: params.progress.max,
 						value: params.progress.value,
+					}, item);
+					break;
+				case 'spinner':
+					this._progressObjects[item.id] = _.defaults({
+						rendered: 0,
+						type: 'spinner',
+						spinners: params.spinners || params.spinner.spinners,
+						text: params.text || params.spinner.text,
 					}, item);
 					break;
 				default: throw new Error('Unknown async-chainable-progress type: ' + item.type);
@@ -49,15 +57,22 @@ module.exports = function() {
 					if (obj.rendered++ > 0) terminal.up(1).eraseLineAfter();
 					process.stdout.write(obj.objRef.update(obj.value, obj.max));
 					break;
+				case 'spinner':
+					if (obj.rendered++ > 0) terminal.up(1).eraseLineAfter();
+					obj.rendered++;
+					process.stdout.write('\u001b[96m' + obj.spinners[obj.rendered % obj.spinners.length] + '\u001b[90m ' + obj.text + "\u001b[0m\n");
+					break;
 			}
 		}
 	};
+	// }}}
 
+	// .progress {{{
 	this.progress = function() {
 		var calledAs = this._getOverload(arguments);
 		switch(calledAs) {
 			case '':
-				this._struct.push({type: 'progress',
+				this._struct.push({
 					type: 'progress',
 					item: {
 						id: 'anonBar',
@@ -66,9 +81,10 @@ module.exports = function() {
 					},
 				});
 				break;
-			case 'string,array': // Form: progress(name, cmd + params)
+			case 'string,array': // Form: progress(name, params)
 				var args = arguments[1];
 				args.id = arguments[0];
+				args.type = 'progressBar';
 				this._struct.push({type: 'progress', item: args});
 				break;
 			case 'number': // Form: progress(progress_complete)
@@ -78,6 +94,43 @@ module.exports = function() {
 						type: 'progressBar',
 						id: 'anonBar',
 						value: arguments[0],
+					},
+				});
+				break;
+			default:
+				throw new Error('Unsupported call type for async-chainable-progress: ' + calledAs);
+		}
+
+		return this;
+	};
+	// }}}
+
+	// .spinner() {{{
+	this.spinner = function() {
+		var calledAs = this._getOverload(arguments);
+		switch(calledAs) {
+			case '':
+				this._struct.push({
+					type: 'progress',
+					item: {
+						id: 'anonSpinner',
+						type: 'spinner',
+					},
+				});
+				break;
+			case 'string,array': // Form: spinner(name, params)
+				var args = arguments[1];
+				args.id = arguments[0];
+				args.type = 'spinner';
+				this._struct.push({type: 'progress', item: args});
+				break;
+			case 'string': // Form: spinner(text)
+				this._struct.push({
+					type: 'progress',
+					item: {
+						type: 'spinner',
+						id: 'anonSpinner',
+						text: arguments[0],
 					},
 				});
 				break;
@@ -101,6 +154,10 @@ module.exports = function() {
 			width: 50,
 			value: 0,
 			max: 100,
+		},
+		spinner: {
+			text: 'Working...',
+			spinners: process.platform == 'win32' ? ['|','/','-','\\'] : ['◜','◠','◝','◞','◡','◟'],
 		},
 	};
 

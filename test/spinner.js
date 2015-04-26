@@ -1,0 +1,27 @@
+var async = require('async-chainable');
+var asyncProgress = require('../');
+
+async()
+	.use(asyncProgress)
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.then(function(next) { setTimeout(next, 100) })
+	.spinner()
+	.end();
