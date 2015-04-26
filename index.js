@@ -25,6 +25,7 @@ module.exports = function() {
 						objRef: new clui.Progress(params.width || params.progress.width),
 						max: params.progress.max,
 						value: params.progress.value,
+						text: params.text || params.progress.text,
 					}, item);
 					break;
 				case 'spinner':
@@ -55,7 +56,11 @@ module.exports = function() {
 			switch (obj.type) {
 				case 'progressBar':
 					if (obj.rendered++ > 0) terminal.up(1).eraseLineAfter();
-					process.stdout.write(obj.objRef.update(obj.value, obj.max) + "\n");
+					process.stdout.write(
+						(obj.text ? '\u001b[90m ' + obj.text + '\u001b[0m ' : '') +
+						obj.objRef.update(obj.value, obj.max) +
+						"\n"
+					);
 					break;
 				case 'spinner':
 					if (obj.rendered++ > 0) terminal.up(1).eraseLineAfter();
@@ -81,7 +86,36 @@ module.exports = function() {
 					},
 				});
 				break;
-			case 'string,array': // Form: progress(name, params)
+			case 'string': // Form: progress(id)
+				this._struct.push({
+					type: 'progress',
+					item: {
+						type: 'progressBar',
+						id: arguments[0],
+					},
+				});
+				break;
+			case 'string,string': // Form: progress(id, text)
+				this._struct.push({
+					type: 'progress',
+					item: {
+						type: 'progressBar',
+						id: arguments[0],
+						text: arguments[1],
+					},
+				});
+				break;
+			case 'object,string': // Form progress(null, text)
+				this._struct.push({
+					type: 'progress',
+					item: {
+						type: 'progressBar',
+						id: 'anonBar',
+						text: arguments[1],
+					},
+				});
+				break;
+			case 'string,array': // Form: progress(id, params)
 				var args = arguments[1];
 				args.id = arguments[0];
 				args.type = 'progressBar';
@@ -154,6 +188,7 @@ module.exports = function() {
 			width: 50,
 			value: 0,
 			max: 100,
+			text: null,
 		},
 		spinner: {
 			text: 'Working...',

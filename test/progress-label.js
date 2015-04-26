@@ -3,17 +3,13 @@ var asyncProgress = require('../');
 
 async()
 	.use(asyncProgress)
-	.progress(0)
+	.progress(null, 'Doing things')
 	.then(function(next) {
 		setTimeout(next, 1000);
 	})
 	.progress(50)
 	.then(function(next) {
 		setTimeout(next, 2000);
-	})
-	.progress(100)
-	.then(function(next) {
-		setTimeout(next, 1000);
 	})
 	.progressComplete()
 	.end();
