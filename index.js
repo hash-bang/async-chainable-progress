@@ -1,6 +1,6 @@
 var _ = require('lodash');
 var clui = require('clui');
-var terminal = require('terminal-kit').terminal();
+var terminal = require('terminal-kit').terminal;
 
 module.exports = function() {
 	this._progressObjects = {};
