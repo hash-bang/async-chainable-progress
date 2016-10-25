@@ -1,6 +1,6 @@
 {
   "name": "async-chainable-progress",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Plugin for async-chainable that adds progress bars, spinners and other widgets",
   "main": "index.js",
   "repository": {
