@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var argy = require('argy');
 var clui = require('clui');
 var terminal = require('terminal-kit').terminal();
 
@@ -74,10 +75,11 @@ module.exports = function() {
 
 	// .progress() {{{
 	this.progress = function() {
-		var calledAs = this._getOverload(arguments);
-		switch(calledAs) {
-			case '':
-				this._struct.push({
+		var chain = this;
+
+		argy(arguments)
+			.ifForm('', function() {
+				chain._struct.push({
 					type: 'progress',
 					item: {
 						id: 'anonBar',
@@ -85,55 +87,75 @@ module.exports = function() {
 						value: 0,
 					},
 				});
-				break;
-			case 'string': // Form: progress(id)
-				this._struct.push({
+			})
+			.ifForm('string', function(key) {
+				chain._struct.push({
 					type: 'progress',
 					item: {
 						type: 'progressBar',
-						id: arguments[0],
+						id: key,
 					},
 				});
-				break;
-			case 'string,string': // Form: progress(id, text)
-				this._struct.push({
+			})
+			.ifForm('string string', function(key, text) {
+				chain._struct.push({
 					type: 'progress',
 					item: {
 						type: 'progressBar',
-						id: arguments[0],
-						text: arguments[1],
+						id: key,
+						text: text,
 					},
 				});
-				break;
-			case 'object,string': // Form progress(null, text)
-				this._struct.push({
-					type: 'progress',
-					item: {
-						type: 'progressBar',
-						id: 'anonBar',
-						text: arguments[1],
-					},
-				});
-				break;
-			case 'string,array': // Form: progress(id, params)
-				var args = arguments[1];
-				args.id = arguments[0];
-				args.type = 'progressBar';
-				this._struct.push({type: 'progress', item: args});
-				break;
-			case 'number': // Form: progress(progress_complete)
-				this._struct.push({
+			})
+			.ifForm('null string', function(junk, text) {
+				chain._struct.push({
 					type: 'progress',
 					item: {
 						type: 'progressBar',
 						id: 'anonBar',
-						value: arguments[0],
+						text: text,
 					},
 				});
-				break;
-			default:
-				throw new Error('Unsupported call type for async-chainable-progress/progress: ' + calledAs);
-		}
+			})
+			.ifForm('string object', function(key, settings) {
+				settings.id = key;
+				settings.type = 'progressBar';
+				chain._struct.push({type: 'progress', item: sertings});
+			})
+			.ifForm('string number', function(key, progress) {
+				this._struct.push({
+					type: 'progress',
+					item: {
+						type: 'progressBar',
+						id: key,
+						value: progress,
+					},
+				});
+			})
+			.ifForm('string number number', function(key, progress, max) {
+				chain._struct.push({
+					type: 'progress',
+					item: {
+						type: 'progressBar',
+						id: key,
+						value: progress,
+						max: max,
+					},
+				});
+			})
+			.ifForm('number', function(progress) {
+				chain._struct.push({
+					type: 'progress',
+					item: {
+						type: 'progressBar',
+						id: 'anonBar',
+						value: progress,
+					},
+				});
+			})
+			.ifFormElse(function(form) {
+				throw new Error('Unsupported call type for async-chainable-progress/progress: ' + form);
+			});
 
 		return this;
 	};
@@ -141,59 +163,66 @@ module.exports = function() {
 
 	// .spinner() {{{
 	this.spinner = function() {
-		var calledAs = this._getOverload(arguments);
-		switch(calledAs) {
-			case '':
-				this._struct.push({
+		var chain = this;
+
+		argy(arguments)
+			.ifForm('', function() {
+				chain._struct.push({
 					type: 'progress',
 					item: {
 						id: 'anonSpinner',
 						type: 'spinner',
 					},
 				});
-				break;
-			case 'string,array': // Form: spinner(name, params)
-				var args = arguments[1];
-				args.id = arguments[0];
-				args.type = 'spinner';
-				this._struct.push({type: 'progress', item: args});
-				break;
-			case 'string': // Form: spinner(text)
-				this._struct.push({
+			})
+			.ifForm('string', function(key) {
+				chain._struct.push({
+					type: 'progress',
+					item: {
+						id: key,
+						type: 'spinner',
+					},
+				});
+			})
+			.ifForm('null string', function(junk, text) {
+				chain._struct.push({
 					type: 'progress',
 					item: {
 						type: 'spinner',
 						id: 'anonSpinner',
-						text: arguments[0],
+						text: text,
 					},
 				});
-				break;
-			default:
-				throw new Error('Unsupported call type for async-chainable-progress/spinner: ' + calledAs);
-		}
+			})
+			.ifForm('string string', function(key, text) {
+				chain._struct.push({
+					type: 'progress',
+					item: {
+						type: 'spinner',
+						id: key,
+						text: text,
+					},
+				});
+			})
+			.ifFormElse(function(form) {
+				throw new Error('Unsupported call type for async-chainable-progress/spinner: ' + form);
+			});
 
 		return this;
 	};
 	// }}}
 
 	// .tick() {{{
-	this.tick = function() {
-		var calledAs = this._getOverload(arguments);
-		switch(calledAs) {
-			case 'string': // Form: tick(text)
-				this._struct.push({type: 'progressTick', text: arguments[0], status: 'ok'});
-				break;
-			default:
-				throw new Error('Unsupported call type for async-chainable-progress/spinner: ' + calledAs);
-		}
+	this.tick = argy('string [string]', function(text, status) {
+		this._struct.push({type: 'progressTick', text: text, status: status || 'ok'});
 
 		this._progressRender();
 
 		return this;
-	};
+	});
 
 	this._plugins['progressTick'] = function(params) {
-		console.log(this._progressDefaults.tick.ok, params.text);
+		console.log(this._progressDefaults.tick[params.status], params.text);
 
 		this._progressRender();
 		this._execute();
@@ -231,20 +260,19 @@ module.exports = function() {
 	};
 
 	this.progressDefaults = function() {
-		var calledAs = this._getOverload(arguments);
-		switch(calledAs) {
-			case '':
-				// Pass
-				break;
-			case 'object':
-				this._struct.push({
+		var chain = this;
+
+		argy(arguments)
+			.ifForm('', function() {})
+			.ifForm('object', function(settings) {
+				chain._struct.push({
 					type: 'progressDefaults',
 					payload:  arguments[0],
 				});
-				break;
-			default:
-				throw new Error('Unsupported call type for async-chainable-progress/progressDefaults: ' + calledAs);
-		}
+			})
+			.ifFormElse(function(form) {
+				throw new Error('Unsupported call type for async-chainable-progress/progressDefaults: ' + form);
+			});
 
 		return this;
 	};
@@ -252,23 +280,24 @@ module.exports = function() {
 
 	// .progressComplete() {{{
 	this.progressComplete = function() {
-		var calledAs = this._getOverload(arguments);
-		switch(calledAs) {
-			case '':
-				this._struct.push({type: 'progressComplete'});
-				break;
-			case 'string': // Form: progressComplete(name)
-				this._struct.push({type: 'progressComplete', ids: [arguments[0]]});
-				break;
-			case 'array': // Form: progressComplete(names)
-				this._struct.push({type: 'progressComplete', ids: arguments[0]});
-				break;
-			default:
-				throw new Error('Unsupported call type for async-chainable-progress/progressComplete: ' + calledAs);
-		}
+		var chain = this;
+
+		argy(arguments)
+			.ifForm('', function() {
+				chain._struct.push({type: 'progressComplete'});
+			})
+			.ifForm('string', function(key) {
+				chain._struct.push({type: 'progressComplete', ids: [key]});
+			})
+			.ifForm('array', function(keys) {
+				chain._struct.push({type: 'progressComplete', ids: keys});
+			})
+			.ifFormElse(function(form) {
+				throw new Error('Unsupported call type for async-chainable-progress/progressComplete: ' + form);
+			});
 
 		return this;
-	}
+	};
 
 	this._plugins['progressComplete'] = function(params) {
 		var removeIds = params.ids || false;
@@ -287,31 +316,33 @@ module.exports = function() {
 
 	// .setProgress() {{{
 	this.setProgress = function() {
-		var calledAs = this._getOverload(arguments);
+		var chain = this;
 		var progressObj;
-		switch(calledAs) {
-			case '':
-				if (! (progressObj = _.find(this._progressObjects, {id: 'anonBar'})) ) return;
+
+		argy(arguments)
+			.ifForm('', function() {
+				if (! (progressObj = _.find(chain._progressObjects, {id: 'anonBar'})) ) return;
 				progressObj.value = 0;
-				break;
-			case 'number':
-				if (! (progressObj = _.find(this._progressObjects, {id: 'anonBar'})) ) return;
-				progressObj.value = arguments[0];
-				break;
-			case 'number,number':
-				if (! (progressObj = _.find(this._progressObjects, {id: 'anonBar'})) ) return;
-				progressObj.value = arguments[0];
-				progressObj.max = arguments[1];
-				break;
-			default:
-				throw new Error('Unsupported call type for async-chainable-progress/setProgress: ' + calledAs);
-		}
+			})
+			.ifForm('number', function(progress) {
+				if (! (progressObj = _.find(chain._progressObjects, {id: 'anonBar'})) ) return;
+				progressObj.value = progress;
+			})
+			.ifForm('number number', function(progress, max) {
+				if (! (progressObj = _.find(chain._progressObjects, {id: 'anonBar'})) ) return;
+				progressObj.value = progress;
+				progressObj.max = max;
+			})
+			.ifFormElse(function(form) {
+				throw new Error('Unsupported call type for async-chainable-progress/setProgress: ' + form);
+			});
+
 		this._progressRender();
 
 		return this;
 	};
 	// }}}
 
-	// Make shortcut for setProgress inside context object
+	// Make shortcut for setProgress / progressComplete inside context object
 	this._context.setProgress = this.setProgress.bind(this);
 };
